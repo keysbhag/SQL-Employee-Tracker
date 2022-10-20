@@ -47,6 +47,10 @@ Follow the prompts on the main menu. You can Add departments, roles, and employe
 ## Github Link
 Here is the link to the github repo: https://github.com/keysbhag/SQL-Employee-Tracker
 
+## Live Video Link
+
+Here is the link to the youtube video: https://www.youtube.com/watch?v=cVlG51TUxrE
+
 
 ## License
 MIT License, Here is the link for more details: https://opensource.org/licenses/MIT [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)] 
