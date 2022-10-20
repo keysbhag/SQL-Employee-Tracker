@@ -54,10 +54,20 @@ const main = () => {
       console.log(`\n`);
       AddDepartment();
     }
+    if(answers.execute === "Update Employee Role") {
+      console.log(`\n`);
+      UpdateEmployee();
+    }
+    if(answers.execute === "Quit") {
+      console.log(`\n`);
+      console.log(`GOODBYE! 😃`) 
+    }
   });
 }
   
 main();
+
+//----------------------------------
 
 function viewAllEmployees () {
   const db = init();
@@ -82,6 +92,8 @@ function viewAllEmployees () {
     .then( () => db.end());
 }
 
+//----------------------------------
+
 function viewAllRoles () {
   const db = init();
 
@@ -99,6 +111,8 @@ function viewAllRoles () {
     .then( () => db.end());
 }
 
+//----------------------------------
+
 function viewAllDepartments () {
   const db = init();
 
@@ -111,6 +125,7 @@ function viewAllDepartments () {
     .then( () => db.end());
 }
 
+//----------------------------------
 async function AddEmployee () {
   const db = init();
 
@@ -137,10 +152,6 @@ async function AddEmployee () {
   })
   .catch(console.log)
   .then( () => db.end());
-
-  // console.log(roles);
-  // console.log(manager);
-  // console.log(manager_id);
 
   inquirer
     .prompt([
@@ -182,7 +193,7 @@ async function AddEmployee () {
     .then((answers) => {
       let managerVal;
       if (answers.addManager === 'None') {
-        managerVal = NULL
+        managerVal = null
       } else {
         managerVal = manager_id[manager.indexOf(answers.addManager)]
       }
@@ -190,7 +201,9 @@ async function AddEmployee () {
       db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
       VALUES (?, ?, ?, ?)`, [answers.addFirst, answers.addLast, (roles.indexOf(answers.addRole) + 1), managerVal])
         .then(([rows,fields]) => {
+          console.log(`\n`);
           console.log(`Successfully Added ${answers.addFirst} ${answers.addLast} to employees!`);
+          console.log('\n');
           main();
         })
         .catch(console.log)
@@ -198,6 +211,8 @@ async function AddEmployee () {
 
     })
 }
+
+//----------------------------------
 
 async function AddRole () {
   const db = init();
@@ -251,7 +266,9 @@ async function AddRole () {
       db.promise().query(`INSERT INTO emp_role (role_name, salary, department_id)
       VALUES (?, ?, ?)`, [answers.addRole, answers.addSalary, (departments.indexOf(answers.addDept) + 1) ])
         .then(([rows,fields]) => {
+          console.log('\n');
           console.log(`Successfully Added ${answers.addRole} to Roles!`);
+          console.log('\n');
           main();
         })
         .catch(console.log)
@@ -259,6 +276,8 @@ async function AddRole () {
 
     })
 }
+
+//----------------------------------
 
 function AddDepartment () {
   const db = init();
@@ -281,7 +300,9 @@ function AddDepartment () {
       db.promise().query(`INSERT INTO department (depart_name)
       VALUES (?)`, [answers.addDept])
         .then(([rows,fields]) => {
+          console.log('\n');
           console.log(`Successfully Added ${answers.addDept} to departments`);
+          console.log('\n');
           main();
         })
         .catch(console.log)
@@ -289,4 +310,64 @@ function AddDepartment () {
 
     })
 
+}
+
+//----------------------------------
+
+async function UpdateEmployee () {
+
+  const db = init();
+
+  let roles = [];
+  let role_id = [];
+  let employee = [];
+  let employee_id = [];
+
+  await db.promise().query(`SELECT id, role_name FROM emp_role`)
+  .then(([rows,fields]) => {
+    for (let row of rows) {
+      roles.push(row.role_name);
+      role_id.push(row.id);
+    }
+  })
+  .catch(console.log)
+
+  await db.promise().query(`SELECT id, concat(first_name, ' ', last_name) AS 'fullName' FROM employee`)
+  .then(([rows,fields]) => {
+    for (let row of rows) {
+      employee.push(row.fullName);
+      employee_id.push(row.id);
+    }
+  })
+  .catch(console.log)
+  .then( () => db.end());
+
+  inquirer
+    .prompt([
+      {
+        type: 'list',
+        name: 'chooseEmp',
+        message: 'What is the name of the employee you want to update?',
+        choices: [...employee]   
+      },
+      {
+        type: 'list',
+        name: 'chooseRole',
+        message: 'What is the new role to be given?',
+        choices: [...roles]
+      }
+    ])
+    .then((answers) => {
+      const db = init();
+      db.promise().query(`UPDATE employee SET role_id = (?) WHERE id = (?)`, [ (role_id[roles.indexOf(answers.chooseRole)]), (employee_id[employee.indexOf(answers.chooseEmp)]) ])
+        .then(([rows,fields]) => {
+          console.log('\n');
+          console.log(`Successfully Updated ${answers.employee}'s Role!`);
+          console.log('\n');
+          main();
+        })
+        .catch(console.log)
+        .then( () => db.end());
+
+    })
 }
