@@ -1,23 +1,18 @@
 const mysql = require('mysql2');
 const inquirer =  require('inquirer');
 const cTable = require('console.table');
-const util = require('util');
+const { viewAllDepartments, viewAllRoles, viewAllEmployees } = require('./helpers/viewFunctions')
 
 // Initialize the db to create connection to database
-function init () {
-  const mysql = require('mysql2');
-  const db = mysql.createConnection(
-      {
-        host: 'localhost',
-        user: 'root',
-        password: 'password',
-        database: 'workplace_db'
-      },
-      console.log(`Connected to the workplace_db database.`)
-    );
-
-    return db;
-}
+const db = mysql.createConnection(
+    {
+      host: 'localhost',
+      user: 'root',
+      password: 'password',
+      database: 'workplace_db'
+    },
+    console.log(`Connected to the workplace_db database.`)
+  );
 
 // main function to invoke inquirer, prompts user to chose among the main menu, whatever they choose, executes the respective function 
 const main = () => {
@@ -34,15 +29,15 @@ const main = () => {
     console.log(answers.execute);
     if(answers.execute === "View All Employee's") {
       console.log(`\n`);
-      viewAllEmployees();
+      callViewAllEmployees();
     }
     if(answers.execute === "View All Roles") {
       console.log(`\n`);
-      viewAllRoles();
+      callViewAllRoles();
     }
     if(answers.execute === "View All Departments") {
       console.log(`\n`);
-      viewAllDepartments();
+      callViewAllDepartments();
     }
     if(answers.execute === "Add Employee") {
       console.log(`\n`);
@@ -70,7 +65,8 @@ const main = () => {
     }
     if(answers.execute === "Quit") {
       console.log(`\n`);
-      console.log(`GOODBYE! 😃`) 
+      console.log(`GOODBYE! 😃`)
+      db.end(); 
     }
   });
 }
@@ -78,73 +74,23 @@ const main = () => {
 // Kick off the program
 main();
 
-//----------------------------------
-
-// Views employee table with id, full name, role, department name, salary, and manager full name 
-function viewAllEmployees () {
-  const db = init();
-
-  db.promise().query(`SELECT a.id, 
-    a.first_name AS 'First Name', 
-    a.last_name AS 'Last Name', 
-    c.role_name AS 'Title', 
-    d.depart_name AS 'Department', 
-    c.salary AS 'Salary',
-    concat(b.first_name, " ", b.last_name) AS "Manager"
-    FROM employee as a
-    LEFT JOIN employee as b ON a.manager_id = b.id
-    JOIN emp_role AS c ON a.role_id = c.id
-    JOIN department AS d ON c.department_id = d.id
-    ORDER BY a.id`)
-    .then(([rows,fields]) => {
-      console.log(cTable.getTable(rows));
-      main();
-    })
-    .catch(console.log)
-    .then( () => db.end());
+function callViewAllEmployees () {
+  viewAllEmployees();
+  setTimeout(main,50);
 }
 
-//----------------------------------
-
-// Views all Roles with salaries and departments
-function viewAllRoles () {
-  const db = init();
-
-  db.promise().query(`SELECT a.id,
-   a.role_name AS 'title',
-   b.depart_name AS 'department',
-   a.salary AS 'salary'
-   FROM emp_role AS a 
-   JOIN department AS b ON a.department_id = b.id`)
-    .then(([rows,fields]) => {
-      console.log(cTable.getTable(rows));
-      main();
-    })
-    .catch(console.log)
-    .then( () => db.end());
+function callViewAllRoles () {
+  viewAllRoles();
+  setTimeout(main,50);
 }
 
-//----------------------------------
-
-// Views all departments and department ID's
-function viewAllDepartments () {
-  const db = init();
-
-  db.promise().query(`SELECT * FROM department`)
-    .then(([rows,fields]) => {
-      console.log(cTable.getTable(rows));
-      main();
-    })
-    .catch(console.log)
-    .then( () => db.end());
+function callViewAllDepartments () {
+  viewAllDepartments();
+  setTimeout(main,50);
 }
-
-//----------------------------------
 
 // Add's employee's to the employee table, prompts user for full name, role, and manager if applicable
 async function AddEmployee () {
-  const db = init();
-
   let roles = [];
   let manager = [];
   let manager_id = [];
@@ -167,7 +113,6 @@ async function AddEmployee () {
     }
   })
   .catch(console.log)
-  .then( () => db.end());
 
   inquirer
     .prompt([
@@ -213,7 +158,6 @@ async function AddEmployee () {
       } else {
         managerVal = manager_id[manager.indexOf(answers.addManager)]
       }
-      const db = init();
       db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
       VALUES (?, ?, ?, ?)`, [answers.addFirst, answers.addLast, (roles.indexOf(answers.addRole) + 1), managerVal])
         .then(([rows,fields]) => {
@@ -223,17 +167,12 @@ async function AddEmployee () {
           main();
         })
         .catch(console.log)
-        .then( () => db.end());
 
     })
 }
 
-//----------------------------------
-
 // Add's Roles to role list, prompting user for role, department, and salary
 async function AddRole () {
-  const db = init();
-
   let departments = [];
   let department_id = [];
   await db.promise().query(`SELECT * FROM department`)
@@ -244,7 +183,6 @@ async function AddRole () {
     }
   })
   .catch(console.log)
-  .then( () => db.end());
 
   inquirer
     .prompt([
@@ -278,7 +216,6 @@ async function AddRole () {
       }
     ])    
     .then((answers) => {
-      const db = init();
       db.promise().query(`INSERT INTO emp_role (role_name, salary, department_id)
       VALUES (?, ?, ?)`, [answers.addRole, answers.addSalary, (department_id[departments.indexOf(answers.addDept)]) ])
         .then(([rows,fields]) => {
@@ -288,17 +225,11 @@ async function AddRole () {
           main();
         })
         .catch(console.log)
-        .then( () => db.end());
-
     })
 }
 
-//----------------------------------
-
 // Add's departments to department table prompting user to give a department name
 function AddDepartment () {
-  const db = init();
-
   inquirer
     .prompt([
       {
@@ -323,19 +254,12 @@ function AddDepartment () {
           main();
         })
         .catch(console.log)
-        .then( () => db.end());
-
     })
 
 }
 
-//----------------------------------
-
 // Updates employee roles, prompting for the employee name and new role update
 async function UpdateEmployee () {
-
-  const db = init();
-
   let roles = [];
   let role_id = [];
   let employee = [];
@@ -358,7 +282,6 @@ async function UpdateEmployee () {
     }
   })
   .catch(console.log)
-  .then( () => db.end());
 
   inquirer
     .prompt([
@@ -376,7 +299,6 @@ async function UpdateEmployee () {
       }
     ])
     .then((answers) => {
-      const db = init();
       db.promise().query(`UPDATE employee SET role_id = (?) WHERE id = (?)`, [ (role_id[roles.indexOf(answers.chooseRole)]), (employee_id[employee.indexOf(answers.chooseEmp)]) ])
         .then(([rows,fields]) => {
           console.log('\n');
@@ -385,15 +307,11 @@ async function UpdateEmployee () {
           main();
         })
         .catch(console.log)
-        .then( () => db.end());
-
     })
 }
 
 // Bonus function to view employees by manager depending on the manager chosen
 async function viewByManager () {
-  const db = init();
-
   let manager = [];
   let manager_id = [];
 
@@ -407,8 +325,6 @@ async function viewByManager () {
     }
   })
   .catch(console.log)
-  .then( () => db.end());
-
 
   inquirer
   .prompt([
@@ -420,7 +336,6 @@ async function viewByManager () {
     }
   ])
   .then((answers) => {
-    const db = init();
     db.promise().query(`SELECT a.id, 
     a.first_name AS 'First Name', 
     a.last_name AS 'Last Name', 
@@ -438,15 +353,11 @@ async function viewByManager () {
         main();
       })
       .catch(console.log)
-      .then( () => db.end());
-
   })
 }
 
 // Bonus function to view employees by department depending on the department chosen
 async function viewEmployeeByDept () {
-  const db = init();
-
   let departments = [];
   await db.promise().query(`SELECT * FROM department`)
   .then(([rows,fields]) => {
@@ -455,8 +366,6 @@ async function viewEmployeeByDept () {
     }
   })
   .catch(console.log)
-  .then( () => db.end());
-
 
   inquirer
   .prompt([
@@ -468,7 +377,6 @@ async function viewEmployeeByDept () {
     }
   ])
   .then((answers) => {
-    const db = init();
     db.promise().query(`SELECT a.id, 
     a.first_name AS 'First Name', 
     a.last_name AS 'Last Name', 
@@ -486,7 +394,5 @@ async function viewEmployeeByDept () {
         main();
       })
       .catch(console.log)
-      .then( () => db.end());
-
   })
 }
