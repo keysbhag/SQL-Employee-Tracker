@@ -218,17 +218,16 @@ async function AddRole () {
   const db = init();
 
   let departments = [];
-
+  let department_id = [];
   await db.promise().query(`SELECT * FROM department`)
   .then(([rows,fields]) => {
     for (let row of rows) {
       departments.push(row.depart_name);
+      department_id.push(row.id);
     }
   })
   .catch(console.log)
   .then( () => db.end());
-
-  console.log(departments);
 
   inquirer
     .prompt([
@@ -264,7 +263,7 @@ async function AddRole () {
     .then((answers) => {
       const db = init();
       db.promise().query(`INSERT INTO emp_role (role_name, salary, department_id)
-      VALUES (?, ?, ?)`, [answers.addRole, answers.addSalary, (departments.indexOf(answers.addDept) + 1) ])
+      VALUES (?, ?, ?)`, [answers.addRole, answers.addSalary, (department_id[departments.indexOf(answers.addDept)]) ])
         .then(([rows,fields]) => {
           console.log('\n');
           console.log(`Successfully Added ${answers.addRole} to Roles!`);
