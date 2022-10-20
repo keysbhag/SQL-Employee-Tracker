@@ -25,7 +25,7 @@ const main = () => {
       type: 'list',
       name: 'execute',
       message: "What Would You Like to do?",
-      choices: ["View All Employee's","Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "Quit"]
+      choices: ["View All Employee's","Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "View By Manager", "View Employee by Department", "Quit"]
     }
   ])
   .then((answers) => {
@@ -57,6 +57,14 @@ const main = () => {
     if(answers.execute === "Update Employee Role") {
       console.log(`\n`);
       UpdateEmployee();
+    }
+    if(answers.execute === "View By Manager") {
+      console.log(`\n`);
+      viewByManager();
+    }
+    if(answers.execute === "View Employee by Department") {
+      console.log(`\n`);
+      viewEmployeeByDept();
     }
     if(answers.execute === "Quit") {
       console.log(`\n`);
@@ -369,4 +377,103 @@ async function UpdateEmployee () {
         .then( () => db.end());
 
     })
+}
+
+async function viewByManager () {
+  const db = init();
+
+  let manager = [];
+  let manager_id = [];
+
+  await db.promise().query(`SELECT id,
+  concat(first_name,' ',last_name) AS 'ManName'
+  FROM employee WHERE manager_id IS NULL`)
+  .then(([rows,fields]) => {
+    for (let row of rows) {
+      manager.push(row.ManName);
+      manager_id.push(row.id);
+    }
+  })
+  .catch(console.log)
+  .then( () => db.end());
+
+
+  inquirer
+  .prompt([
+    {
+      type: 'list',
+      name: 'chooseManager',
+      message: 'What is the name of the manager you want to search by',
+      choices: [...manager]
+    }
+  ])
+  .then((answers) => {
+    const db = init();
+    db.promise().query(`SELECT a.id, 
+    a.first_name AS 'First Name', 
+    a.last_name AS 'Last Name', 
+    c.role_name AS 'Title', 
+    d.depart_name AS 'Department', 
+    c.salary AS 'Salary',
+    concat(b.first_name, " ", b.last_name) AS "Manager"
+    FROM employee as a
+    LEFT JOIN employee as b ON a.manager_id = b.id
+    JOIN emp_role AS c ON a.role_id = c.id
+    JOIN department AS d ON c.department_id = d.id
+    WHERE a.manager_id = ?`, manager_id[manager.indexOf(answers.chooseManager)])
+      .then(([rows,fields]) => {
+          console.log(cTable.getTable(rows))
+        main();
+      })
+      .catch(console.log)
+      .then( () => db.end());
+
+  })
+}
+
+async function viewEmployeeByDept () {
+  const db = init();
+
+  let departments = [];
+  await db.promise().query(`SELECT * FROM department`)
+  .then(([rows,fields]) => {
+    for (let row of rows) {
+      departments.push(row.depart_name);
+    }
+  })
+  .catch(console.log)
+  .then( () => db.end());
+
+
+  inquirer
+  .prompt([
+    {
+      type: 'list',
+      name: 'chooseDepartments',
+      message: 'What is the name of department you want to search by',
+      choices: [...departments]
+    }
+  ])
+  .then((answers) => {
+    const db = init();
+    db.promise().query(`SELECT a.id, 
+    a.first_name AS 'First Name', 
+    a.last_name AS 'Last Name', 
+    c.role_name AS 'Title', 
+    d.depart_name AS 'Department', 
+    c.salary AS 'Salary',
+    concat(b.first_name, " ", b.last_name) AS "Manager"
+    FROM employee as a
+    LEFT JOIN employee as b ON a.manager_id = b.id
+    JOIN emp_role AS c ON a.role_id = c.id
+    JOIN department AS d ON c.department_id = d.id
+    WHERE d.depart_name = ?`, answers.chooseDepartments)
+      .then(([rows,fields]) => {
+          console.log(cTable.getTable(rows))
+        main();
+      })
+      .catch(console.log)
+      .then( () => db.end());
+
+  })
 }
