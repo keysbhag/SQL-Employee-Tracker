@@ -3,6 +3,7 @@ const inquirer =  require('inquirer');
 const cTable = require('console.table');
 const util = require('util');
 
+// Initialize the db to create connection to database
 function init () {
   const mysql = require('mysql2');
   const db = mysql.createConnection(
@@ -18,6 +19,7 @@ function init () {
     return db;
 }
 
+// main function to invoke inquirer, prompts user to chose among the main menu, whatever they choose, executes the respective function 
 const main = () => {
   inquirer
   .prompt([
@@ -72,11 +74,13 @@ const main = () => {
     }
   });
 }
-  
+
+// Kick off the program
 main();
 
 //----------------------------------
 
+// Views employee table with id, full name, role, department name, salary, and manager full name 
 function viewAllEmployees () {
   const db = init();
 
@@ -102,6 +106,7 @@ function viewAllEmployees () {
 
 //----------------------------------
 
+// Views all Roles with salaries and departments
 function viewAllRoles () {
   const db = init();
 
@@ -121,6 +126,7 @@ function viewAllRoles () {
 
 //----------------------------------
 
+// Views all departments and department ID's
 function viewAllDepartments () {
   const db = init();
 
@@ -134,6 +140,8 @@ function viewAllDepartments () {
 }
 
 //----------------------------------
+
+// Add's employee's to the employee table, prompts user for full name, role, and manager if applicable
 async function AddEmployee () {
   const db = init();
 
@@ -222,6 +230,7 @@ async function AddEmployee () {
 
 //----------------------------------
 
+// Add's Roles to role list, prompting user for role, department, and salary
 async function AddRole () {
   const db = init();
 
@@ -286,6 +295,7 @@ async function AddRole () {
 
 //----------------------------------
 
+// Add's departments to department table prompting user to give a department name
 function AddDepartment () {
   const db = init();
 
@@ -321,6 +331,7 @@ function AddDepartment () {
 
 //----------------------------------
 
+// Updates employee roles, prompting for the employee name and new role update
 async function UpdateEmployee () {
 
   const db = init();
@@ -379,6 +390,7 @@ async function UpdateEmployee () {
     })
 }
 
+// Bonus function to view employees by manager depending on the manager chosen
 async function viewByManager () {
   const db = init();
 
@@ -431,6 +443,7 @@ async function viewByManager () {
   })
 }
 
+// Bonus function to view employees by department depending on the department chosen
 async function viewEmployeeByDept () {
   const db = init();
 
